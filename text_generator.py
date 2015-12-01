@@ -3,7 +3,7 @@ import json
 import random
 from os.path import join
 
-sentence_len = 10
+sentence_len = 5
 paragraph_len = 5
 
 
@@ -46,6 +46,7 @@ class Korchevatel(object):
             corpus = json.loads(raw_json)
 
             self.starters = WordPicker.convert(corpus['starters'])
+            self.frequency_after_word = corpus['frequency_after_word']
             self.frequency_after_pair = corpus['frequency_after_pair']
 
     def generate(self, words_count):
@@ -67,15 +68,27 @@ class Korchevatel(object):
 
     def generate_sentence(self):
         words = WordPicker.pick(self.starters).split()
-        current_len = 2
-        while current_len < sentence_len or self.get_prev_frequency(words) > 40:
-            new_word = self.generate_word(words)
-            if new_word is not None:
-                words.append(new_word)
-            else:
-                break
+        new_word = self.generate_second_word(words)
+        if new_word is not None:
+            words.append(new_word)
+
+            current_len = 2
+            while current_len < sentence_len or self.get_prev_frequency(words) > 70:
+                new_word = self.generate_word(words)
+                if new_word is not None:
+                    words.append(new_word)
+                else:
+                    break
         words[0] = words[0].title()
         return " ".join(words) + "."
+
+    def generate_second_word(self, prev_words):
+        prev_phrase = prev_words[-1]
+        if prev_phrase in self.frequency_after_word:
+            variants = self.frequency_after_word[prev_phrase]
+            return WordPicker.pick_raw(variants)
+        else:
+            return None
 
     def generate_word(self, prev_words):
         prev_phrase = prev_words[-2] + u" " + prev_words[-1]
@@ -94,9 +107,13 @@ class Korchevatel(object):
             return None
 
 if __name__ == "__main__":
-    author = "dontsova"
+    author = "simplewiki"
 
+    print "Load corpus..."
     korchevatel = Korchevatel(author)
+    print "Generate text..."
     text = korchevatel.generate(1000)
+    print "Write file..."
     with open(author + ".txt", "wb") as f:
         f.write(text.encode('utf8'))
+    print "Done!"
