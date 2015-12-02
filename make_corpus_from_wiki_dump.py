@@ -4,7 +4,8 @@ from itertools import chain
 
 
 def stringify_children(node):
-    parts = ([node.text] + list(chain(*([c.text, tostring(c), c.tail] for c in node.getchildren()))) + [node.tail])
+    parts = ([node.text] + list(chain(*([c.text, tostring(c), c.tail]
+             for c in node.getchildren()))) + [node.tail])
     return ''.join(filter(None, parts))
 
 
@@ -13,8 +14,11 @@ def do(filepath, name):
     root = xml.getroot()
     for page in root.findall("{http://www.mediawiki.org/xml/export-0.10/}page"):
         title = page.find("{http://www.mediawiki.org/xml/export-0.10/}title")
-        text = page.find("{http://www.mediawiki.org/xml/export-0.10/}revision/{http://www.mediawiki.org/xml/export-0.10/}text")
-        u_title = stringify_children(title).strip().replace(u':', '_').replace(u'/', '_').replace(u'*', '_').replace(u'\"', '').replace(u'?', '_').replace(u'\\', '_')
+        text = page.find("{http://www.mediawiki.org/xml/export-0.10/}revision/"
+                         "{http://www.mediawiki.org/xml/export-0.10/}text")
+        u_title = stringify_children(title).strip().replace(u':', '_')\
+            .replace(u'/', '_').replace(u'*', '_').replace(u'\"', '')\
+            .replace(u'?', '_').replace(u'\\', '_')
 
         if len(u_title) > 30:
             u_title = u_title[:30]
