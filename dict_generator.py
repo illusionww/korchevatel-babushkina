@@ -34,28 +34,23 @@ class Corpus(object):
                     self.process_sentence(sentence)
 
     def process_sentence(self, sentence):
-        words = sentence.split()
+        words = [word for word in sentence.split()
+                 if word not in [',', '-', '\'']]
         if len(words) > 2:
             self.starters[words[0]] += 1
             for prev, word in [(words[i - 1], words[i])
-                               for i in xrange(1, len(words))
-                               if words[i - 1] not in [',', '-'] and
-                                  words[i] not in [',', '-']]:
+                               for i in xrange(1, len(words))]:
                 self.frequency_after_word[prev][word] += 1
             for pair, word in [(words[i - 2] + " " + words[i - 1], words[i])
-                               for i in xrange(2, len(words))
-                               if words[i - 2] not in [',', '-'] and
-                                  words[i - 1] not in [',', '-'] and
-                                  words[i] not in [',', '-']]:
+                               for i in xrange(2, len(words))]:
                 self.frequency_after_pair[pair][word] += 1
             self.frequency_after_pair[words[-2] + " " + words[-1]]['.'] += 1
 
     def clean_text(self, text):
         # replace endings, quotes, dashes, ё
         text = text.replace('\r\n', '\n').replace('\r', '\n') \
-            .replace('\'', ' ').replace('\"', '.') \
-            .replace(u'\u00AB', '.').replace(u'\u00BB', '.') \
-            .replace(u'ё', u'е')
+            .replace('\"', '.').replace('--', ' ').replace(u'ё', u'е') \
+            .replace(u'\u00AB', '.').replace(u'\u00BB', '.')
         # delete {{ }} wiki metainformation
         text = re.sub(u'\{\{[^\\r]*?\}\}', u' ', text)
         # delete < > tags
@@ -66,11 +61,12 @@ class Corpus(object):
         text = re.sub(u'\[.+?\]', u' ', text)
         # delete all symbols inside ( )
         text = re.sub(u'\(.+?\)', u' ', text)
-        # delete all symbols except \w . , - and \n
-        text = re.sub(u'[^\wа-яА-Я,\-\.\n ]', u' ', text)
+        # delete all symbols except \w . , - ' and \n
+        text = re.sub(u'[^\wа-яА-Я,\-\.\n\' ]', u' ', text)
         text = re.sub(u'\s[,\-]+\s', u' ', text)
         # fix commas
         text = re.sub(u'\s*([,\.])\s*', r'\1 ', text)
+        text = re.sub(u'\s?\'\s?', u' ', text)
         # split sentences
         text = re.sub(u'\s*\.\s*([A-ZА-Я])', r'|\1', text)
         text = re.sub(u'\s*\.\s*\\n', u'\n', text)
@@ -79,7 +75,7 @@ class Corpus(object):
 
 
 if __name__ == "__main__":
-    author = "ruwiki"
+    author = "default"
 
     print "Process files..."
     corpus = Corpus()
@@ -91,6 +87,6 @@ if __name__ == "__main__":
         'frequency_after_pair': corpus.frequency_after_pair
     }, ensure_ascii=False).encode('utf8')
     print "Write json..."
-    with open(join("corpus", author + ".json"), "wb", ) as f:
+    with open(join("corpus", author + ".json"), "wb") as f:
         f.write(json_data)
     print "Done!"
