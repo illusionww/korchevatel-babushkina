@@ -3,9 +3,6 @@ import json
 import random
 from os.path import join
 
-sentence_len = 5
-paragraph_len = 5
-
 
 class WordPicker(object):
     @staticmethod
@@ -37,6 +34,7 @@ class WordPicker(object):
 class Korchevatel(object):
     def __init__(self, corpus_name):
         self.starters = None
+        self.frequency_after_word = None
         self.frequency_after_pair = None
         self.load_corpus(corpus_name)
 
@@ -50,21 +48,20 @@ class Korchevatel(object):
             self.frequency_after_pair = corpus['frequency_after_pair']
 
     def generate(self, words_count):
-        count_sentences = words_count // sentence_len
-        count_paragraphs = count_sentences // paragraph_len
-
+        i, count = 0, 0
         paragraphs = []
-        for i in xrange(count_paragraphs):
-            new_paragraph = self.generate_paragraph()
-            paragraphs.append(new_paragraph)
-        return "\n".join(paragraphs)
-
-    def generate_paragraph(self):
         sentences = []
-        for i in xrange(paragraph_len):
-            new_sentence = self.generate_sentence()
+        while count < words_count:
+            print "\tSentence #" + str(i)
+            new_sentence, sentence_words_count = self.generate_sentence()
+            i += 1
+            count += sentence_words_count
             sentences.append(new_sentence)
-        return " ".join(sentences)
+            if len(sentences) == 5:
+                new_paragraph = " ".join(sentences)
+                paragraphs.append(new_paragraph)
+                sentences = []
+        return "\n".join(paragraphs)
 
     def generate_sentence(self):
         words = WordPicker.pick(self.starters).split()
@@ -72,15 +69,15 @@ class Korchevatel(object):
         if new_word is not None:
             words.append(new_word)
 
-            current_len = 2
-            while current_len < sentence_len or self.get_prev_frequency(words) > 70:
+            while words[-1] != ".":
                 new_word = self.generate_word(words)
-                if new_word is not None:
+                if new_word is not None and new_word != words[-1] \
+                        and new_word != words[-2]:
                     words.append(new_word)
                 else:
                     break
         words[0] = words[0].title()
-        return " ".join(words) + "."
+        return " ".join(words), len(words)
 
     def generate_second_word(self, prev_words):
         prev_phrase = prev_words[-1]
@@ -107,7 +104,8 @@ class Korchevatel(object):
             return None
 
 if __name__ == "__main__":
-    author = "simplewiki"
+    author = "ruwiki"
+    paragraph_len = 5
 
     print "Load corpus..."
     korchevatel = Korchevatel(author)
