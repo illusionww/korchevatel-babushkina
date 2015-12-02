@@ -1,6 +1,8 @@
+# coding=utf-8
 import codecs
 import json
 import random
+import re
 from os.path import join
 
 
@@ -57,11 +59,12 @@ class Korchevatel(object):
             i += 1
             count += sentence_words_count
             sentences.append(new_sentence)
-            if len(sentences) == 5:
+            if len(sentences) == 12:
                 new_paragraph = " ".join(sentences)
                 paragraphs.append(new_paragraph)
                 sentences = []
-        return "\n".join(paragraphs)
+        text = "\n".join(paragraphs)
+        return self.post_processing(text)
 
     def generate_sentence(self):
         words = WordPicker.pick(self.starters).split()
@@ -95,13 +98,9 @@ class Korchevatel(object):
         else:
             return None
 
-    def get_prev_frequency(self, prev_words):
-        prev_phrase = prev_words[-2] + u" " + prev_words[-1]
-        if prev_phrase in self.frequency_after_pair:
-            variants = self.frequency_after_pair[prev_phrase]
-            return WordPicker.convert(variants)[1]
-        else:
-            return None
+    def post_processing(self, text):
+        text = re.sub(u'\s*([\.,])', r'\1', text)
+        return re.sub(u',\.', u'.', text)
 
 if __name__ == "__main__":
     author = "ruwiki"
@@ -110,7 +109,7 @@ if __name__ == "__main__":
     print "Load corpus..."
     korchevatel = Korchevatel(author)
     print "Generate text..."
-    text = korchevatel.generate(1000)
+    text = korchevatel.generate(10000)
     print "Write file..."
     with open(author + ".txt", "wb") as f:
         f.write(text.encode('utf8'))

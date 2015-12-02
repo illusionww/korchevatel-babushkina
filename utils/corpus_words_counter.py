@@ -1,4 +1,4 @@
-# coding=UTF-8
+# coding=utf-8
 import codecs
 import re
 from os import listdir

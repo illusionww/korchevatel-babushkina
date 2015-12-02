@@ -1,4 +1,4 @@
-# coding=UTF-8
+# coding=utf-8
 import codecs
 import json
 import re
@@ -18,7 +18,7 @@ class Corpus(object):
                  isfile(join(folder, f))]
         count = len(books)
         for i in xrange(count):
-            print "Process file #" + str(i+1) + "/" + str(count)
+            print "Process file #" + str(i + 1) + "/" + str(count)
             self.process_book(books[i])
 
     def process_book(self, book):
@@ -35,22 +35,26 @@ class Corpus(object):
 
     def process_sentence(self, sentence):
         words = sentence.split()
-        if len(words) > 1:
+        if len(words) > 2:
             self.starters[words[0]] += 1
             for prev, word in [(words[i - 1], words[i])
-                               for i in xrange(1, len(words))]:
+                               for i in xrange(1, len(words))
+                               if words[i - 1] not in [',', '-'] and
+                                  words[i] not in [',', '-']]:
                 self.frequency_after_word[prev][word] += 1
-            self.frequency_after_pair[words[-2] + " " + words[-1]]['.'] += 1
-        if len(words) > 2:
             for pair, word in [(words[i - 2] + " " + words[i - 1], words[i])
-                               for i in xrange(2, len(words))]:
+                               for i in xrange(2, len(words))
+                               if words[i - 2] not in [',', '-'] and
+                                  words[i - 1] not in [',', '-'] and
+                                  words[i] not in [',', '-']]:
                 self.frequency_after_pair[pair][word] += 1
+            self.frequency_after_pair[words[-2] + " " + words[-1]]['.'] += 1
 
     def clean_text(self, text):
         # replace endings, quotes, dashes, ё
         text = text.replace('\r\n', '\n').replace('\r', '\n') \
             .replace('\'', ' ').replace('\"', '.') \
-            .replace(u'\u00AB', '.').replace(u'\u00BB', '.')\
+            .replace(u'\u00AB', '.').replace(u'\u00BB', '.') \
             .replace(u'ё', u'е')
         # delete {{ }} wiki metainformation
         text = re.sub(u'\{\{[^\\r]*?\}\}', u' ', text)
